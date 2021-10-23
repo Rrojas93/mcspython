@@ -19,7 +19,7 @@ host$ sudo chmod +x mcs.py  # If not already executable.
 
 ## Step 2: Install Python Requirements
 ```bash
-host$ python3 -m pip install ./mcspython/requirements.txt
+host$ python3 -m pip install -r ./mcspython/requirements.txt
 ```
 
 ## Step 3: Setup
