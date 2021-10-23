@@ -17,8 +17,8 @@
 
 import os, sys, re, argparse, subprocess, time, psutil
 
-MCS_DIR = "mcspython"
-MCS_DIR_PATH = MCS_DIR
+TEMP_DIR = "mcspython"
+TEMP_DIR_PATH = TEMP_DIR
 FIFO_IN_NAME = "mcsinput.fifo"
 FIFO_IN_PATH = FIFO_IN_NAME
 OUTPUT_FILE = "output"
@@ -110,8 +110,8 @@ def arg_setup():
         nothing will be overwritten.
     '''
 
-    if(not(os.path.exists(MCS_DIR_PATH))):
-        os.mkdir(MCS_DIR_PATH)
+    if(not(os.path.exists(TEMP_DIR_PATH))):
+        os.mkdir(TEMP_DIR_PATH)
     if(not(os.path.exists(FIFO_IN_PATH))):
         os.mkfifo(FIFO_IN_PATH)
 
@@ -228,12 +228,12 @@ def parse_arguments(arg_list:list):
     else:
         exit("Server directory does not exist.")
     
-    global MCS_DIR_PATH
+    global TEMP_DIR_PATH
     global FIFO_IN_PATH
     global OUTPUT_FILE_PATH
-    MCS_DIR_PATH = os.path.join(args.svr_dir, MCS_DIR)
-    FIFO_IN_PATH = os.path.join(MCS_DIR_PATH, FIFO_IN_NAME)
-    OUTPUT_FILE_PATH = os.path.join(MCS_DIR_PATH, OUTPUT_FILE)
+    TEMP_DIR_PATH = os.path.join(args.svr_dir, TEMP_DIR)
+    FIFO_IN_PATH = os.path.join(TEMP_DIR_PATH, FIFO_IN_NAME)
+    OUTPUT_FILE_PATH = os.path.join(TEMP_DIR_PATH, OUTPUT_FILE)
 
 if __name__ == "__main__":
     main()
