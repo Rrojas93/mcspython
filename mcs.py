@@ -32,16 +32,19 @@ def main():
     parse_arguments(sys.argv[1:])
     run_args()
     
-
 def run_args():
     '''
         Performs any actions by the command line arguments.
     '''
-    if(args.setup):
+    if(args.stop):
+        arg_stop()
+    elif(args.setup):
         arg_setup()
     elif(args.run):
         arg_setup()
         arg_run()
+    elif(args.raw):
+        arg_raw()
 
 def communicate(cmd:str)->str:
     '''
@@ -80,14 +83,14 @@ def is_server_running()->bool:
         Determine if the server is currently running. 
     '''
     for proc in psutil.process_iter(['pid', 'name', 'cmdline', 'cwd']):
-        # keywords = [
-        #     'java',
-        #     '-jar',
-        #     'server.jar'
-        # ]
         keywords = [
-            'someproc.py', 
+            'java',
+            '-jar',
+            'server.jar'
         ]
+        # keywords = [ # for testing
+        #     'someproc.py', 
+        # ]
         cmd_args = proc.info.get('cmdline')
         results = list()
         for k in keywords:
@@ -101,38 +104,54 @@ def is_server_running()->bool:
             return True
     return False
 
+def arg_setup():
+    '''
+        Performs initial setup. This can be safetly called multiple times as 
+        nothing will be overwritten.
+    '''
+
+    if(not(os.path.exists(MCS_DIR_PATH))):
+        os.mkdir(MCS_DIR_PATH)
+    if(not(os.path.exists(FIFO_IN_PATH))):
+        os.mkfifo(FIFO_IN_PATH)
+
 def arg_run():
     '''
         Starts the Minecraft server.
     '''
     if(is_server_running()):
-        exit("Server is already running.")
+        # exit("Server is already running.")
+        return
 
-    # start_cmd = "java "
-    # if(args.jav_args):
-    #     start_cmd += args.jav_args + ' '
-    # start_cmd += "-jar server.jar "
-    # if(args.svr_args):
-    #     start_cmd += args.svr_args + " "
-    start_cmd = "./test/someproc.py"
-    output_file = "./mcspython/output.txt"
-    print("someproc exists?: " + str(os.path.exists(start_cmd)))
-    print("fifo in exists?: " + str(os.path.exists(FIFO_IN_PATH)))
-    print("output file exist?: " + str(os.path.exists(output_file)))
-    full_cmd = f"/usr/bin/tail -f {FIFO_IN_PATH} | {start_cmd} > {output_file} & "
+    start_cmd = "java "
+    if(args.jav_args):
+        start_cmd += args.jav_args + ' '
+    start_cmd += "-jar server.jar "
+    if(args.svr_args):
+        start_cmd += args.svr_args + " "
+    # start_cmd = "./test/someproc.py" # For testing
+    full_cmd = f"/usr/bin/tail -f {FIFO_IN_PATH} | {start_cmd} > {OUTPUT_FILE_PATH} & "
     try:
         proc = subprocess.Popen(full_cmd, shell=True)
     except Exception as e:
         exit("Error occured when attempting to start server: " + str(e))
     else:
-        # print(f"tail proc: {tail_proc.pid}")
-        print(f"server proc: {proc.pid}")
+        print(f"Server PID: {proc.pid}")
 
 def arg_stop()->bool:
     '''
         Send the stop command to the server.
     '''
-    pass
+    if(is_server_running()):
+        print(communicate("stop"))
+    else:
+        print("Server is not running.")
+
+def arg_raw():
+    '''
+        Sends a raw argument to the server and prints it's output.
+    '''
+    print(communicate(args.raw))
 
 def terminal(cmd:str)->tuple:
     '''
@@ -173,9 +192,9 @@ def parse_arguments(arg_list:list):
         help="Sends a stop request to the server."
     )
 
-    parser.add_argument("--run_args",
-        nargs='*',
-        help="Ignore this, this is used internally."
+    parser.add_argument("--raw",
+        type=str,
+        help="Send a raw string command to the server and print it's output. Should be enclosed in quotes."
     )
 
     parser.add_argument("--svr_dir",
@@ -211,8 +230,10 @@ def parse_arguments(arg_list:list):
     
     global MCS_DIR_PATH
     global FIFO_IN_PATH
+    global OUTPUT_FILE_PATH
     MCS_DIR_PATH = os.path.join(args.svr_dir, MCS_DIR)
     FIFO_IN_PATH = os.path.join(MCS_DIR_PATH, FIFO_IN_NAME)
+    OUTPUT_FILE_PATH = os.path.join(MCS_DIR_PATH, OUTPUT_FILE)
 
 if __name__ == "__main__":
     main()
