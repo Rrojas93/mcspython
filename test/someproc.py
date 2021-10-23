@@ -17,5 +17,5 @@ printlog("started some process.\n")
 while(True):
     inp = input("Enter Command: ")
     printlog(f"Received Command: {inp}\n")
-    if('exit' in inp):
+    if('stop' in inp):
         break

@@ -21,7 +21,10 @@ MCS_DIR = "mcspython"
 MCS_DIR_PATH = MCS_DIR
 FIFO_IN_NAME = "mcsinput.fifo"
 FIFO_IN_PATH = FIFO_IN_NAME
+OUTPUT_FILE = "output"
+OUTPUT_FILE_PATH = OUTPUT_FILE
 SCRIPT_VERSION = "mcs.py version: v0.0.1"
+COM_TIMEOUT = 5
 args = None
 
 
@@ -40,17 +43,37 @@ def run_args():
         arg_setup()
         arg_run()
 
-
-def arg_setup():
+def communicate(cmd:str)->str:
     '''
-        Performs initial setup. This can be safetly called multiple times as 
-        nothing will be overwritten.
+        Sends a command to the server and returns it's response.
     '''
+    # Get the end of file position.
+    with open(OUTPUT_FILE_PATH, 'r') as f:
+        f.seek(0, 2)
+        position = f.tell()
+    
+    # Send command to server.
+    with open(FIFO_IN_PATH, 'w') as f: 
+        f.write(cmd.strip() + '\n')
+    
+    # Wait for a response or timeout
+    size = position
+    t_start = time.time()
+    while(size <= position and (time.time() <= (t_start + COM_TIMEOUT - 1))):
+        with open(OUTPUT_FILE_PATH, 'r') as f: 
+            f.seek(0, 2)
+            size = f.tell()
+        time.sleep(0.1)
+        # print("waiting for response..")
 
-    if(not(os.path.exists(MCS_DIR_PATH))):
-        os.mkdir(MCS_DIR_PATH)
-    if(not(os.path.exists(FIFO_IN_PATH))):
-        os.mkfifo(FIFO_IN_PATH)
+    # Return response from output file
+    #   Start reading output file from position acquired above.
+    data = ''
+    if(size > position):
+        with open(OUTPUT_FILE_PATH, 'r') as f: 
+            f.seek(position)
+            data = f.read()
+    return data
 
 def is_server_running()->bool:
     '''
