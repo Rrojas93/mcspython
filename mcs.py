@@ -17,7 +17,7 @@
 
 import os, sys, re, argparse, subprocess, time, psutil
 
-TEMP_DIR = "mcspython"
+TEMP_DIR = "tempfiles"
 TEMP_DIR_PATH = TEMP_DIR
 FIFO_IN_NAME = "mcsinput.fifo"
 FIFO_IN_PATH = FIFO_IN_NAME
