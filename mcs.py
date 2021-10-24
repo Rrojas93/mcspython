@@ -15,16 +15,22 @@
         not required.
 '''
 
-import os, sys, re, argparse, subprocess, time, psutil
+import os, sys, re, argparse, subprocess, time, psutil, json
 
+# Path names
 TEMP_DIR = "tempfiles"
 TEMP_DIR_PATH = TEMP_DIR
 FIFO_IN_NAME = "mcsinput.fifo"
 FIFO_IN_PATH = FIFO_IN_NAME
 OUTPUT_FILE = "output"
 OUTPUT_FILE_PATH = OUTPUT_FILE
+SERVER_CMD_STRUCTURE = 'servercmds.json'
+
+# Other constants
 SCRIPT_VERSION = "mcs.py version: v0.0.1"
 COM_TIMEOUT = 5
+
+# Globals
 args = None
 
 
@@ -153,6 +159,18 @@ def arg_raw():
     '''
     print(communicate(args.raw))
 
+def arg_update_cmd_list():
+    '''
+        Updates the command list from the server.
+    '''
+    if(not(is_server_running())):
+        exit("The server must be running to perform this command.")
+    
+    help_text = communicate('help')
+    data = parse_server_cmds(help_text)
+    with(SERVER_CMD_STRUCTURE, 'w') as f:
+        json.dump(data, f, indent=4)
+
 def terminal(cmd:str)->tuple:
     '''
         Runs a terminal command as a child process and returns the output as a 
@@ -163,11 +181,66 @@ def terminal(cmd:str)->tuple:
     out, err = proc.communicate()
     return (out.decode('utf-8').strip(), err.decode('utf-8').strip())
 
-def parse_server_cmds(help_output:str):
+def parse_server_cmds(help_output:str)->dict:
     '''
-        
+        Parses the server commands and returns a dictionary of the commands.
+
+        Data Structure: 
+        ```
+        {
+            cmd_name: {
+                'aliases': [],
+                'arguments': [
+                    {
+                        'literal': bool
+                        'multiple': bool
+                        'choices': [],
+                    }
+                ]
+            }
+        }
+        ```
     '''
-    pass
+    data = dict()
+    aliases = list()
+    for line in help_output.splitlines():
+        logspl = line.split('/')
+        if('->' in logspl[-1]):
+            aliases.append(logspl[-1])
+            continue
+        if(len(logspl) == 3):
+            items = logspl[-1].split(' ')
+            cmd = items[0]
+            data[cmd] = {
+                'aliases': list(),
+                'arguments': list()
+            }
+            for arg in items[1:]: 
+                multiple = False
+                if(re.match(r'\(.*\)', arg)):
+                    # contains multiple choices.
+                    arg = arg.replace('(', '').replace(')', '')
+                    choices = arg.split('|')
+                elif(re.match(r'\[.*\]', arg)):
+                    arg = arg.replace('[', '').replace(']', '')
+                    choices = arg.split('|')
+                    multiple = True
+                
+                # If any choices contain a non literal value, we can't provide strict choices.
+                literal = not(any([re.match(r'<\w*>', c) is not None for c in choices]))
+                data[cmd]['arguments'].append(
+                    {
+                        'literal': literal,
+                        'multiple': multiple,
+                        'choices': choices
+                    }
+                )
+    for entry in aliases:
+        cmd = entry.split()[-1]
+        alias = entry.split()[0]
+        if(data.get(cmd)):
+            data[cmd]['aliases'].append(alias)
+    return data
 
 def parse_arguments(arg_list:list):
     '''
@@ -212,6 +285,11 @@ def parse_arguments(arg_list:list):
         type=str,
         default="nogui",
         help="The command line arguments to add in the server start command. Should be a single quoted string."
+    )
+
+    parser.add_argument("--update_cmd_list",
+        action='store_true',
+        help="Pulls the available commands from the server and updates the command list in this script."
     )
 
     parser.add_argument("-v", "-V", "--version",
