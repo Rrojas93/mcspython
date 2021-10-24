@@ -36,7 +36,9 @@ def run_args():
     '''
         Performs any actions by the command line arguments.
     '''
-    if(args.stop):
+    if(args.is_running):
+        print(is_server_running())
+    elif(args.stop):
         arg_stop()
     elif(args.setup):
         arg_setup()
@@ -120,7 +122,7 @@ def arg_run():
         Starts the Minecraft server.
     '''
     if(is_server_running()):
-        # exit("Server is already running.")
+        exit("Server is already running.")
         return
 
     start_cmd = "java "
@@ -166,12 +168,6 @@ def terminal(cmd:str)->tuple:
     out, err = proc.communicate()
     return (out.decode('utf-8').strip(), err.decode('utf-8').strip())
 
-def parse_server_cmds(help_output:str):
-    '''
-        
-    '''
-    pass
-
 def parse_arguments(arg_list:list):
     '''
         Parses the command line arguments.
@@ -198,6 +194,11 @@ def parse_arguments(arg_list:list):
     parser.add_argument("--send",
         type=str,
         help="Send a raw string command to the server and print it's output. Should be enclosed in quotes."
+    )
+
+    parser.add_argument("--is_running",
+        action='store_true',
+        help="Determines if the server is currently running."
     )
 
     parser.add_argument("--svr_dir",
