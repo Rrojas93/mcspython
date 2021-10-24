@@ -45,7 +45,7 @@ def run_args():
     elif(args.run):
         arg_setup()
         arg_run()
-    elif(args.raw):
+    elif(args.send):
         arg_send()
 
 def communicate(cmd:str)->str:
@@ -153,7 +153,7 @@ def arg_send():
     '''
         Sends a raw argument to the server and prints it's output.
     '''
-    output = communicate(args.raw)
+    output = communicate(args.send)
     # Remove the first two columns of output (time stamp and log type)
     output = '\n'.join([line.split(':')[-1].strip() for line in output.splitlines()])
     print(output)
