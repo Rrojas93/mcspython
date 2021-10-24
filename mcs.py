@@ -23,7 +23,7 @@ FIFO_IN_NAME = "mcsinput.fifo"
 FIFO_IN_PATH = FIFO_IN_NAME
 OUTPUT_FILE = "output"
 OUTPUT_FILE_PATH = OUTPUT_FILE
-SCRIPT_VERSION = "mcs.py version: v0.0.1"
+SCRIPT_VERSION = "mcs.py version: v0.1.0"
 COM_TIMEOUT = 5
 args = None
 
