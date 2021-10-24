@@ -44,7 +44,7 @@ def run_args():
         arg_setup()
         arg_run()
     elif(args.raw):
-        arg_raw()
+        arg_send()
 
 def communicate(cmd:str)->str:
     '''
@@ -147,11 +147,14 @@ def arg_stop()->bool:
     else:
         print("Server is not running.")
 
-def arg_raw():
+def arg_send():
     '''
         Sends a raw argument to the server and prints it's output.
     '''
-    print(communicate(args.raw))
+    output = communicate(args.raw)
+    # Remove the first two columns of output (time stamp and log type)
+    output = '\n'.join([line.split(':')[-1].strip() for line in output.splitlines()])
+    print(output)
 
 def terminal(cmd:str)->tuple:
     '''
@@ -192,7 +195,7 @@ def parse_arguments(arg_list:list):
         help="Sends a stop request to the server."
     )
 
-    parser.add_argument("--raw",
+    parser.add_argument("--send",
         type=str,
         help="Send a raw string command to the server and print it's output. Should be enclosed in quotes."
     )
