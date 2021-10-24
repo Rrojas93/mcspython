@@ -24,7 +24,8 @@ FIFO_IN_NAME = "mcsinput.fifo"
 FIFO_IN_PATH = FIFO_IN_NAME
 OUTPUT_FILE = "output"
 OUTPUT_FILE_PATH = OUTPUT_FILE
-SERVER_CMD_STRUCTURE = 'servercmds.json'
+SERVER_CMDS_FILE = 'servercmds.json'
+SERVER_CMDS_FILE_PATH = SERVER_CMDS_FILE
 
 # Other constants
 SCRIPT_VERSION = "mcs.py version: v0.0.1"
@@ -37,6 +38,7 @@ args = None
 def main():
     parse_arguments(sys.argv[1:])
     run_args()
+    # arg_update_cmd_list()
     
 def run_args():
     '''
@@ -51,6 +53,8 @@ def run_args():
         arg_run()
     elif(args.raw):
         arg_raw()
+    else:
+        exit("Nothing to do. Did you forget an argument?")
 
 def communicate(cmd:str)->str:
     '''
@@ -167,8 +171,12 @@ def arg_update_cmd_list():
         exit("The server must be running to perform this command.")
     
     help_text = communicate('help')
+
+    # with open('test/testfiles/helpoutput.txt', 'r') as f:
+    #     help_text = f.read()
+
     data = parse_server_cmds(help_text)
-    with(SERVER_CMD_STRUCTURE, 'w') as f:
+    with open(SERVER_CMDS_FILE, 'w') as f:
         json.dump(data, f, indent=4)
 
 def terminal(cmd:str)->tuple:
@@ -213,7 +221,8 @@ def parse_server_cmds(help_output:str)->dict:
             cmd = items[0]
             data[cmd] = {
                 'aliases': list(),
-                'arguments': list()
+                'arguments': list(),
+                'help_txt': ' '.join(items[1:])
             }
             for arg in items[1:]: 
                 multiple = False
@@ -241,6 +250,51 @@ def parse_server_cmds(help_output:str)->dict:
         if(data.get(cmd)):
             data[cmd]['aliases'].append(alias)
     return data
+
+def load_server_cmds(parser:argparse.ArgumentParser, server_dir:str)->argparse.ArgumentParser:
+    '''
+        Loads the server commands if they're available and adds them to the parser.
+
+        Parameters: 
+            parser: The parser object to add arguments to.
+
+            server_dir: The server directory path.
+    '''
+    svr_cmd_file = os.path.join(server_dir, TEMP_DIR, SERVER_CMDS_FILE)
+    if(not(os.path.exists(svr_cmd_file))):
+        print("Update server commands with: --update_cmd_list")
+        return parser
+    
+    try: 
+        with open(svr_cmd_file, 'r') as f:
+            cmd_data = json.load(f)
+    except Exception as e: 
+        print("An error occured when loading server command list. Please update with: --update_cmd_list")
+        return parser
+    
+    for cmd in list(cmd_data.keys()):
+        args = [f'--mcs_{cmd}']
+        if(cmd_data[cmd]['aliases']):
+            for alias in cmd_data[cmd]['aliases']:
+                args.append(f'--mcs_{alias}')
+        helptxt = cmd_data[cmd]['help_txt']
+        if(any(a['multiple'] for a in cmd_data[cmd]['arguments']) and (len(cmd_data[cmd]['arguments']) > 0)):
+            nargs = '+'
+        elif(cmd_data[cmd]['arguments']):
+            nargs = len(cmd_data[cmd]['arguments'])
+        else:
+            nargs = None
+        if(all(a['literal'] for a in cmd_data[cmd]['arguments']) and (len(cmd_data[cmd]['arguments']) > 0)):
+            choices = [c for a in cmd_data[cmd]['arguments'] for c in a['choices']]
+        else:
+            choices = None
+        parser.add_argument(*args,
+            type=str,
+            nargs=nargs,
+            choices=choices,
+            help=helptxt
+        )
+    return parser
 
 def parse_arguments(arg_list:list):
     '''
@@ -298,6 +352,15 @@ def parse_arguments(arg_list:list):
         help="Show script version number and exit."
     )
 
+    # Need to preemptively look for server directory to look for existing server commands.
+    svr_dir = os.path.abspath(os.path.dirname(__file__))
+    if('--svr_dir' in arg_list):
+        ind = arg_list.index('--svr_dir')
+        if(len(arg_list) > ind):
+            svr_dir = arg_list[ind + 1]
+
+    parser = load_server_cmds(parser, svr_dir)
+
     global args
     args = parser.parse_args(arg_list)
 
@@ -309,9 +372,12 @@ def parse_arguments(arg_list:list):
     global TEMP_DIR_PATH
     global FIFO_IN_PATH
     global OUTPUT_FILE_PATH
+    global SERVER_CMDS_FILE_PATH
     TEMP_DIR_PATH = os.path.join(args.svr_dir, TEMP_DIR)
     FIFO_IN_PATH = os.path.join(TEMP_DIR_PATH, FIFO_IN_NAME)
     OUTPUT_FILE_PATH = os.path.join(TEMP_DIR_PATH, OUTPUT_FILE)
+    SERVER_CMDS_FILE_PATH = os.path.join(TEMP_DIR_PATH, SERVER_CMDS_FILE)
+
 
 if __name__ == "__main__":
     main()

@@ -9,7 +9,7 @@
             "type": "python",
             "request": "launch",
             "program": "${file}",
-            "args": ["--run"],
+            "args": ["-h"],
             "console": "integratedTerminal"
         }
     ]
