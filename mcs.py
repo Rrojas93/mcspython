@@ -155,7 +155,7 @@ def arg_send():
     '''
     output = communicate(args.send)
     # Remove the first two columns of output (time stamp and log type)
-    output = '\n'.join([line.split(':')[-1].strip() for line in output.splitlines()])
+    output = '\n'.join([':'.join(col[3:]).strip() for line in output.splitlines() for col in line.split(':')])
     print(output)
 
 def terminal(cmd:str)->tuple:
