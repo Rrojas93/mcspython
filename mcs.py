@@ -201,12 +201,12 @@ def parse_arguments(arg_list:list):
         help="Performs initial setup."
     )
 
-    parser.add_argument(["--run", "--start"],
+    parser.add_argument("--run", "--start",
         action='store_true',
         help="Starts the server if it is not already running. This script may not work correctly unless the server is started by this script."
     )
 
-    parser.add_argument(["--stop", "/stop"],
+    parser.add_argument("--stop", "/stop",
         action='store_true',
         help="Sends a stop request to the server."
     )
