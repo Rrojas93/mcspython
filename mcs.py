@@ -47,6 +47,8 @@ def run_args():
         arg_run()
     elif(args.send):
         arg_send()
+    elif(args.list):
+        arg_list()
 
 def communicate(cmd:str)->str:
     '''
@@ -158,6 +160,23 @@ def arg_send():
     output = '\n'.join([':'.join(line.split(':')[3:]).strip() for line in output.splitlines()])
     print(output)
 
+def arg_list():
+    '''
+        Lists the number of players currently logged into the server.
+    '''
+    output = communicate("list")
+    if(re.match(r'there are \d+ of a max of \d+ players online:', output.lower())):
+        output = output.split()
+        if(output[2].isnumeric()):
+            num_online = int(output[2])
+        if(output[7].isnumeric()):
+            num_max = int(output[7])
+        print(f"{num_online}/{num_max} Players Online.")
+        if(num_online > 0):
+            for player in output.split(':')[-1].split(','):
+                player = player.strip()
+                print(player)
+
 def terminal(cmd:str)->tuple:
     '''
         Runs a terminal command as a child process and returns the output as a 
@@ -173,7 +192,8 @@ def parse_arguments(arg_list:list):
         Parses the command line arguments.
     '''
     parser = argparse.ArgumentParser(
-        description="A command line management utility for vanilla minecraft servers."
+        description="A command line management utility for vanilla minecraft servers.",
+        prefix_chars="-/"
     )
 
     parser.add_argument("--setup",
@@ -181,12 +201,12 @@ def parse_arguments(arg_list:list):
         help="Performs initial setup."
     )
 
-    parser.add_argument("--run",
+    parser.add_argument(["--run", "--start"],
         action='store_true',
         help="Starts the server if it is not already running. This script may not work correctly unless the server is started by this script."
     )
 
-    parser.add_argument("--stop",
+    parser.add_argument(["--stop", "/stop"],
         action='store_true',
         help="Sends a stop request to the server."
     )
@@ -222,6 +242,12 @@ def parse_arguments(arg_list:list):
         action='version',
         version=SCRIPT_VERSION,
         help="Show script version number and exit."
+    )
+
+    # Minecraft Server CLI Commands: 
+    parser.add_argument("/list",
+        action="store_true",
+        help="List players on the server."
     )
 
     global args
