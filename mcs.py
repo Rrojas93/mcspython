@@ -193,7 +193,7 @@ def parse_arguments(arg_list:list):
     '''
     parser = argparse.ArgumentParser(
         description="A command line management utility for vanilla minecraft servers.",
-        prefix_chars="-/"
+        prefix_chars="-"
     )
 
     parser.add_argument("--setup",
@@ -206,7 +206,7 @@ def parse_arguments(arg_list:list):
         help="Starts the server if it is not already running. This script may not work correctly unless the server is started by this script."
     )
 
-    parser.add_argument("--stop", "/stop",
+    parser.add_argument("--stop", "-stop",
         action='store_true',
         help="Sends a stop request to the server."
     )
@@ -222,7 +222,7 @@ def parse_arguments(arg_list:list):
     )
 
     parser.add_argument("--svr_dir",
-        type=str,
+        type=dir_path,
         default=os.path.abspath(os.path.dirname(__file__)),
         help="Sets the server directory."
     )
@@ -245,7 +245,7 @@ def parse_arguments(arg_list:list):
     )
 
     # Minecraft Server CLI Commands: 
-    parser.add_argument("/list",
+    parser.add_argument("-list",
         action="store_true",
         help="List players on the server."
     )
