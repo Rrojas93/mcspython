@@ -169,7 +169,7 @@ def arg_list():
             num_online = int(output_spl[2])
         if(output_spl[7].isnumeric()):
             num_max = int(output_spl[7])
-        print(f"{num_online}/{num_max} Players Online.")
+        print(f"{num_online}/{num_max} Players Online:")
         if(num_online > 0):
             for player in output.split(':')[-1].split(','):
                 print(player.strip())
