@@ -156,26 +156,23 @@ def arg_send():
         Sends a raw argument to the server and prints it's output.
     '''
     output = communicate(args.send)
-    # Remove the first two columns of output (time stamp and log type)
-    output = '\n'.join([':'.join(line.split(':')[3:]).strip() for line in output.splitlines()])
-    print(output)
+    print(clean_output(output))
 
 def arg_list():
     '''
         Lists the number of players currently logged into the server.
     '''
-    output = communicate("list")
+    output = clean_output(communicate("list"))
     if(re.match(r'there are \d+ of a max of \d+ players online:', output.lower())):
-        output = output.split()
-        if(output[2].isnumeric()):
-            num_online = int(output[2])
-        if(output[7].isnumeric()):
-            num_max = int(output[7])
+        output_spl = output.split()
+        if(output_spl[2].isnumeric()):
+            num_online = int(output_spl[2])
+        if(output_spl[7].isnumeric()):
+            num_max = int(output_spl[7])
         print(f"{num_online}/{num_max} Players Online.")
         if(num_online > 0):
             for player in output.split(':')[-1].split(','):
-                player = player.strip()
-                print(player)
+                print(player.strip())
 
 def terminal(cmd:str)->tuple:
     '''
@@ -186,6 +183,23 @@ def terminal(cmd:str)->tuple:
     proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
     out, err = proc.communicate()
     return (out.decode('utf-8').strip(), err.decode('utf-8').strip())
+
+def clean_output(svr_output:str)->str:
+    '''
+        Cleans the server output.
+    '''
+    # Remove the first two columns of output (time stamp and log type)
+    return '\n'.join([':'.join(line.split(':')[3:]).strip() for line in svr_output.splitlines()])
+
+def dir_path(dir_path):
+    '''
+        Determines if the path is a directory.
+    '''
+    dir_path = dir_path.replace('\"', '')
+    if(os.path.isdir(dir_path)):
+        return dir_path
+    else:
+        raise NotADirectoryError(dir_path)
 
 def parse_arguments(arg_list:list):
     '''
