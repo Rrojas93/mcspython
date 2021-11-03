@@ -162,6 +162,9 @@ def arg_list():
     '''
         Lists the number of players currently logged into the server.
     '''
+    if(not(is_server_running())):
+        print("Server is not on.")
+        return
     output = clean_output(communicate("list"))
     if(re.match(r'there are \d+ of a max of \d+ players online:', output.lower())):
         output_spl = output.split()
